@@ -1,0 +1,65 @@
+AWS Audit README
+----------------
+AWS Audit is intended to be used to both track Amazon Webservices configuration changes across 
+multiple accounts, and also provide a data building block to be used as a foundation for other 
+applications.
+
+
+Requirements
+------------
+Python 2.6 - we haven't tested on any earlier or later versions
+Boto Library 2.0b4 (http://code.google.com/p/boto/) - again, not tested on any other
+Apache 2+ (optional but used to access the result)
+
+
+Installation Steps (See below for details)
+------------------------------------------
+Create IAM User Account with S3 read permissions
+Create S3 Bucket to store account credentials *only* accessible by an account user, not everyone!!
+Create config file (/etc/aws_audit.conf)
+Install ec2_audit.py file in a directory (/u01/app/audit/)
+Run the file manually and check for errors
+Install crontab
+*/12 * * * * /u01/app/audit/aws_audit.py >/tmp/aws_audit.out 2>&1
+Access the aws_audit.xml using a browser
+Try a visualisation
+
+
+
+Amazon account credentials in S3 Bucket
+---------------------------------------
+AWS Audit has the ability to track multiple Amazon Webservices accounts, the account credentials need 
+to be stored somewhere, we have chosen to use an S3 bucket. You can secure the S3 bucket using an IAM 
+policy and bucket policy, but we just use the master AWS accounts access keys for where the S3 bucket 
+is configured.
+
+The master account details required to read all the account credentials are configured by AWS Audit in 
+the /etc/aws_audit.conf file, in these 2 settings:
+master_aws_key:
+master_aws_secret:
+
+
+The format of the S3 files is show below:
+
+Folder: <accountNumber>-<accountEmail> e.g. 123456789123-joe@example.com
+  File: creds-<accountNumber>-<accountEmail>.txt e.g. creds-123456789123-joe@example.com.txt
+    Contents: see below, N.B. the keys are randomly generated
+AccountName=joe@example.com
+AWSAccessKeyId=ABTHJK7TBVBV45PDYFAMA
+AWSSecretKey=5jJoj3aaJi3mdAWW76jE89FNxVPeOabXqqQIS2be
+
+
+Visualisation
+-------------
+The visualation is simply an XSLT javascript which provides a simple framework for producing dashboards 
+off the back of the master XML file (aws_audit.xml) produced; the files involved are:
+xsltproc.html		# Javascript file which loads the XML file and an XSL file to produce an Output, 
+                        # you may need to change the line to point to the result XML: 
+                        # xml=loadXMLDoc("aws_audit.xml");
+index.html		# Basic frameset
+menu.html		# Basic menu
+DBs.xsl			# Example XSL to show all RDS instances
+EC2_instances.xsl	# Example XSL to show all EC2 instances
+VPC_instances.xsl	# Example XSL to show all VPC/EC2 Instances
+Summary_EC2.xsl		# Example Summary to show the EC2 Instance summary by account
+

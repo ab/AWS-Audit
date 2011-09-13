@@ -1,0 +1,24 @@
+ # YAML
+# configuration file for aws_audit.py
+# 
+# This contains sensitive data
+
+# these are your master AWS credentials. The account specified here must have
+# access to the S3 bucket which contains your (other) account credentials
+master_aws_key: 
+master_aws_secret: 
+# The primary_region is the region in which the master account resides
+primary_region: eu-west-1
+# Amazon's current region list. If you do not use some regions, you
+# can remove them from the list
+regions: us-east-1,us-west-1,eu-west-1,ap-southeast-1,ap-northeast-1
+# The credential_bucket contains keys to other AWS accounts, as documented
+# in the README and on the wiki
+credential_bucket: yourbucketname-goes-here
+# The output_file is where the XML gets dumped to
+output_file: aws_audit.xml
+# These settings are placed into the output XML. They should be 
+# self-explanatory.
+xml_comment: This is our AWS audit
+xml_contact_name: Dave Null
+xml_contact_email: dave.null@example.com
