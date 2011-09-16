@@ -24,23 +24,35 @@ function getURLParam( name )
 function loadXMLDoc(fname)
 {
   var xmlDoc;
-  // code for IE
-  if (window.ActiveXObject)
+  try //Internet Explorer
   {
     xmlDoc=new ActiveXObject("Microsoft.XMLDOM");
+    xmlDoc.async=false;
+    xmlDoc.load(fname);
   }
-  // code for Mozilla, Firefox, Opera, etc.
-  else if (document.implementation
-  && document.implementation.createDocument)
-  {
-    xmlDoc=document.implementation.createDocument("","",null);
+  catch(e)
+    {
+    try //Firefox, Mozilla, Opera, etc.
+      {
+      xmlDoc=document.implementation.createDocument("","",null);
+      xmlDoc.async=false;
+      xmlDoc.load(fname);
+      }
+    catch(e)
+      {
+      try //Google Chrome
+        {
+        var xmlhttp = new window.XMLHttpRequest();
+        xmlhttp.open("GET",fname,false);
+        xmlhttp.send(null);
+        xmlDoc = xmlhttp.responseXML.documentElement;
+        }
+        catch(e)
+        {
+        return null;
+        }
+     }
    }
-  else
-  {
-    alert('Your browser cannot handle this script');
-  }
-xmlDoc.async=false;
-xmlDoc.load(fname);
 return(xmlDoc);
 }
 function displayResult()
