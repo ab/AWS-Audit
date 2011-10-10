@@ -42,7 +42,7 @@ master_aws_secret:
 The format of the S3 files is show below:
 
 Folder: <accountNumber>-<accountEmail> e.g. 123456789123-joe@example.com
-  File: creds-<accountNumber>-<accountEmail>.txt e.g. creds-123456789123-joe@example.com.txt
+  File: cred-<accountNumber>-<accountEmail>.txt e.g. cred-123456789123-joe@example.com.txt
     Contents: see below, N.B. the keys are randomly generated
 AccountName=joe@example.com
 AWSAccessKeyId=ABTHJK7TBVBV45PDYFAMA
