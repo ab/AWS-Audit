@@ -9,6 +9,7 @@ Requirements
 ------------
 Python 2.6 - we haven't tested on any earlier or later versions
 Boto Library 2.0b4 (http://code.google.com/p/boto/) - again, not tested on any other
+PyYAML 3.10 (http://pyyaml.org/wiki/PyYAML)
 Apache 2+ (optional but used to access the result)
 
 
