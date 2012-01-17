@@ -91,20 +91,21 @@ xml_revhistory = ET.SubElement(xml_codeinfo,'Contact')
 xml_revhistory.attrib['name'] = config['xml_contact_name']
 xml_revhistory.attrib['email'] = config['xml_contact_email']
 
+def get_account_id(access_key_id, secret_access_key):
+    """Parse the account number from IAM output for current user."""
+    iam = boto.connect_iam(aws_access_key_id=access_key_id,
+                           aws_secret_access_key=secret_access_key)
+    response = iam.get_user()
+    string = response['get_user_response']['get_user_result']['user']['arn']
+    return string.split(':')[4]
+
 for account in subaccounts:
     print "Building XML for account: "+account['aws_account']
     xml_acctdetails = ET.SubElement(xml_root,'Account')
     xml_acctdetails.attrib['name'] = account['aws_account']
-    # Such a hack, but it appears to be tricky to extract the Amazon account ID via the API
-    try:
-        conn = boto.ec2.connect_to_region(primaryregion, aws_access_key_id=account['aws_key'], aws_secret_access_key=account['aws_secret'])
-        response = conn.get_all_images(owners=['self'])
-        image = response[0]
-        account_id = image.owner_id
-        xml_acctdetails.attrib['awsNumber'] = account_id
-    except IndexError:
-        print "Account has no running instances, cannot determine account ID"
-        xml_acctdetails.attrib['awsNumber'] = "undetermined"
+
+    xml_acctdetails.attrib['awsNumber'] = get_account_id(account['aws_key'],
+                                                         account['aws_secret'])
 
     regions = config['regions'].split(",")
     for region in regions:
