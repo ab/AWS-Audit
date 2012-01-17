@@ -63,20 +63,20 @@ print "Extracting keys"
 for key in keys:
     if regex.match(key.name):
         filename = key.name.split('/')[1]
-	file_contents = key.get_contents_as_string()
+        file_contents = key.get_contents_as_string()
         lines = file_contents.split('\n')
         for line in lines:
             line = line.replace('\r', '')
-	    cols = line.split('=')
+            cols = line.split('=')
             if cols[0] == "AccountName":
                 aws_account = cols[1]
                 print "Found keys for account: "+aws_account
             if cols[0] == "AWSAccessKeyId":
-	        aws_key = cols[1]
+                aws_key = cols[1]
             if cols[0] == "AWSSecretKey":
                 aws_secret = cols[1]
         found_creds = {"aws_account":aws_account, "aws_key":aws_key, "aws_secret":aws_secret}
-	subaccounts.append(found_creds)
+        subaccounts.append(found_creds)
 
 print "Building XML document. This will take some time."
 xml_root = ET.Element('Audit')
@@ -127,16 +127,16 @@ for account in subaccounts:
                     if "tags" in k:
                         xml_tagdata = ''
                         for a, b in v.items():
-		        ## Fix For elasticmapreduce ##
+                        ## Fix For elasticmapreduce ##
                             if re.search(':',a):
-		                a = a.replace(":","_")
-		                ## Remove White Spaces ##
-		            a = a.replace(' ','')
-		            xml_tagdata = ET.SubElement(xml_ec2instance,a + "Tag")
+                                a = a.replace(":","_")
+                                ## Remove White Spaces ##
+                            a = a.replace(' ','')
+                            xml_tagdata = ET.SubElement(xml_ec2instance,a + "Tag")
                             xml_tagdata.text = b
                     if "block_device_mapping" in k:
-		        xml_blockdevicedata = ET.SubElement(xml_ec2instance,"block_device_data")
-		        for mount, volume in v.items():
+                        xml_blockdevicedata = ET.SubElement(xml_ec2instance,"block_device_data")
+                        for mount, volume in v.items():
                             xml_blockdevicemount = ET.SubElement(xml_blockdevicedata,"mount")
                             xml_blockdevicemount.text = mount
                             obj = volume.__dict__
