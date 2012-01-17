@@ -9,18 +9,21 @@ Any number of accounts can be queried, and it will look in every AWS region.
 
 It is massively rough around the edges! Please feel free to improve!
 
-This requires a configuration file in /etc/aws_audit.conf.
+It uses a configuration file in /etc/aws_audit.conf by default. You can specify
+a different location with the first argument on the command-line.
 
 This configuration file will require a 'master' AWS API key and secret, this AWS account
 should have access to an S3 bucket containing the credentials of any other AWS accounts
 that you would like to be included in the output. Please read the README.
 
 '''
-import yaml
-import urllib
+import os
 import re
-import time
 import shutil
+import sys
+import time
+import urllib
+import yaml
 import xml.etree.cElementTree as ET
 
 from types import *
@@ -30,20 +33,26 @@ import boto.ec2
 import boto.rds
 import boto.sdb
 
+if len(sys.argv) >= 2:
+    config_file = sys.argv[1]
+else:
+    config_file = '/etc/aws_audit.conf'
+
+try:
+    config = yaml.safe_load(open(config_file, 'r'))
+except IOError, err:
+    print 'Failed to open config file.'
+    print err
+    print ''
+    print 'usage: ' + os.path.basename(sys.argv[0]) + ' CONFIG'
+    sys.exit(2)
+
+primaryregion = config['primary_region']
+subaccounts = []
+
 print "Auditing our AWS usage and building XML data file."
 print "CAUTION: This is a long process, and can take up to"
 print "ten minutes to complete. Do not cancel once started."
-
-try:
-    config = yaml.load(open('/etc/aws_audit.conf','r').read())
-except IOError:
-    print "I couldn't find my config file! Check /etc/aws_audit.conf is present and correct."
-    quit()
-except KeyError:
-    print "Specifying your master AWS key and secret are mandatory in the config file"
-    quit()
-primaryregion = config['primary_region']
-subaccounts = []
 
 print "Connecting to the master S3 bucket containing our keys"
 master_s3 = boto.connect_s3(aws_access_key_id=config['master_aws_key'], aws_secret_access_key=config['master_aws_secret'])
