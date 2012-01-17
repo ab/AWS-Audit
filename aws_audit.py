@@ -2,7 +2,7 @@
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 
-''' 
+'''
 aws_audit.py - Queries a bunch of AWS accounts and produce an XML document from the details
 returned by the Amazon API. What you use the resulting XML file is entirely up to you. :)
 Any number of accounts can be queried, and it will look in every AWS region.
@@ -71,7 +71,7 @@ for key in keys:
 
 print "Building XML document. This will take some time."
 xml_root = ET.Element('Audit')
-comment = ET.Comment(config['xml_comment']) 
+comment = ET.Comment(config['xml_comment'])
 xml_root.append(comment)
 xml_codeinfo = ET.SubElement(xml_root,'CodeInfo')
 xml_generator = ET.SubElement(xml_codeinfo,'Generator')
@@ -121,7 +121,7 @@ for account in subaccounts:
                             if re.search(':',a):
 		                a = a.replace(":","_")
 		                ## Remove White Spaces ##
-		            a = a.replace(' ','') 
+		            a = a.replace(' ','')
 		            xml_tagdata = ET.SubElement(xml_ec2instance,a + "Tag")
                             xml_tagdata.text = b
                     if "block_device_mapping" in k:
@@ -134,8 +134,8 @@ for account in subaccounts:
                                 a = str(a)
                                 b = str(b)
                                 xml_blockdevicevolume = ET.SubElement(xml_blockdevicemount,a)
-                                xml_blockdevicevolume.text = b 
-                    else: 
+                                xml_blockdevicevolume.text = b
+                    else:
                         v = str(v)
                         xml_instdata = ET.SubElement(xml_ec2instance,k)
                         xml_instdata.text = v
@@ -154,7 +154,7 @@ for account in subaccounts:
                     if "name" in k:
                         xml_sgname = ET.SubElement(xml_securitygroup,k)
                         xml_sgname.text = v
-           
+
                     if "rules" in k:
                         xml_sgrules = ET.SubElement(xml_securitygroup,'Rules')
                         for rule in v:
@@ -292,7 +292,7 @@ for account in subaccounts:
                     for user in uresult.Users:
                         xml_group_member = ET.SubElement(xml_group,'MemberUserName')
                         xml_group_member.text = user.UserName
-  
+
                 policies = conn_iam.get_all_group_policies(group.GroupName)
                 presult = policies.ListGroupPoliciesResponse.ListGroupPoliciesResult
                 if hasattr(presult, 'PolicyNames'):
@@ -308,7 +308,7 @@ for account in subaccounts:
             if hasattr (uresult, 'Users'):
                 for user in uresult.Users:
                     xml_user = ET.SubElement(xml_iam,'User')
-              
+
                     for k, v in user.items():
                         xml_user_data = ET.SubElement(xml_user,k)
                         xml_user_data.text = v
