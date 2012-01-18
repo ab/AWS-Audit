@@ -19,7 +19,6 @@ that you would like to be included in the output. Please read the README.
 '''
 import os
 import re
-import shutil
 import sys
 import time
 import urllib
@@ -47,36 +46,51 @@ except IOError, err:
     print 'usage: ' + os.path.basename(sys.argv[0]) + ' CONFIG'
     sys.exit(2)
 
-primaryregion = config['primary_region']
-subaccounts = []
+def get_accounts_s3(access_key_id, secret_access_key):
+    subaccounts = []
+    print "Connecting to the master S3 bucket containing our keys"
+    master_s3 = boto.connect_s3(aws_access_key_id=config['master_aws_key'], aws_secret_access_key=config['master_aws_secret'])
+    master_bucket = master_s3.get_bucket(config['credential_bucket'])
+    keys = master_bucket.get_all_keys()
+    regex = re.compile('.*\/cred\-.*\.txt$')
+    print "Extracting keys"
+    for key in keys:
+        if regex.match(key.name):
+            filename = key.name.split('/')[1]
+            file_contents = key.get_contents_as_string()
+            lines = file_contents.split('\n')
+            for line in lines:
+                line = line.replace('\r', '')
+                cols = line.split('=')
+                if cols[0] == "AccountName":
+                    aws_account = cols[1]
+                    print "Found keys for account: "+aws_account
+                if cols[0] == "AWSAccessKeyId":
+                    aws_key = cols[1]
+                if cols[0] == "AWSSecretKey":
+                    aws_secret = cols[1]
+            found_creds = {"aws_account":aws_account, "aws_key":aws_key, "aws_secret":aws_secret}
+            subaccounts.append(found_creds)
+    return subaccounts
+
+def get_accounts_yaml(config):
+    return config['accounts']
 
 print "Auditing our AWS usage and building XML data file."
 print "CAUTION: This is a long process, and can take up to"
 print "ten minutes to complete. Do not cancel once started."
 
-print "Connecting to the master S3 bucket containing our keys"
-master_s3 = boto.connect_s3(aws_access_key_id=config['master_aws_key'], aws_secret_access_key=config['master_aws_secret'])
-master_bucket = master_s3.get_bucket(config['credential_bucket'])
-keys = master_bucket.get_all_keys()
-regex = re.compile('.*\/cred\-.*\.txt$')
-print "Extracting keys"
-for key in keys:
-    if regex.match(key.name):
-        filename = key.name.split('/')[1]
-        file_contents = key.get_contents_as_string()
-        lines = file_contents.split('\n')
-        for line in lines:
-            line = line.replace('\r', '')
-            cols = line.split('=')
-            if cols[0] == "AccountName":
-                aws_account = cols[1]
-                print "Found keys for account: "+aws_account
-            if cols[0] == "AWSAccessKeyId":
-                aws_key = cols[1]
-            if cols[0] == "AWSSecretKey":
-                aws_secret = cols[1]
-        found_creds = {"aws_account":aws_account, "aws_key":aws_key, "aws_secret":aws_secret}
-        subaccounts.append(found_creds)
+try:
+    subaccounts = get_accounts_yaml(config)
+except KeyError:
+    try:
+        key_id = config['master_aws_key']
+        secret = config['master_aws_secret']
+    except KeyError:
+        print 'Need either accounts list or master_aws_key + _secret'
+        sys.exit(3)
+    else:
+        subaccounts = get_accounts_s3(key_id, secret)
 
 print "Building XML document. This will take some time."
 xml_root = ET.Element('Audit')
@@ -104,8 +118,8 @@ for account in subaccounts:
     xml_acctdetails = ET.SubElement(xml_root,'Account')
     xml_acctdetails.attrib['name'] = account['aws_account']
 
-    xml_acctdetails.attrib['awsNumber'] = get_account_id(account['aws_key'],
-                                                         account['aws_secret'])
+    account_id = get_account_id(account['aws_key'], account['aws_secret'])
+    xml_acctdetails.attrib['awsNumber'] = account_id
 
     regions = config['regions'].split(",")
     for region in regions:
@@ -377,9 +391,11 @@ print "Reformatting XML"
 indent(xml_root)
 
 outputfile = config['output_file']
-oldoutput = outputfile+'.old'
-print "Backing up previous XML file"
-shutil.copy(outputfile,oldoutput)
+
+if os.path.exists(outputfile):
+    oldoutput = outputfile + '~'
+    print "Backing up previous XML file"
+    os.rename(outputfile,oldoutput)
 
 print "Writing new XML file"
 file = open(outputfile,'w')
